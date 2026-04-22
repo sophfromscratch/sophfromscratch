@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bluey's Riddle Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --blue: #4A90D9;
+      --dark-blue: #2c5f8a;
+      --orange: #F5A623;
+      --yellow: #FFD95A;
+      --green: #5DBB6B;
+      --red: #E85D5D;
+      --bg: #E8F4FD;
+      --white: #ffffff;
+      --shadow: 0 8px 32px rgba(74,144,217,0.18);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Animated cloud background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background:
+        radial-gradient(ellipse 200px 80px at 10% 15%, rgba(255,255,255,0.7) 0%, transparent 70%),
+        radial-gradient(ellipse 150px 60px at 80% 10%, rgba(255,255,255,0.6) 0%, transparent 70%),
+        radial-gradient(ellipse 180px 70px at 50% 80%, rgba(255,255,255,0.5) 0%, transparent 70%),
+        linear-gradient(180deg, #c9e8f7 0%, #e8f4fd 60%, #d4edda 100%);
+      z-index: -1;
+    }
+
+    /* Paw print decorations */
+    .paw {
+      position: fixed;
+      font-size: 2rem;
+      opacity: 0.12;
+      animation: float 6s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .paw:nth-child(1) { top: 8%; left: 5%; animation-delay: 0s; }
+    .paw:nth-child(2) { top: 20%; right: 8%; animation-delay: 1s; }
+    .paw:nth-child(3) { bottom: 25%; left: 3%; animation-delay: 2s; }
+    .paw:nth-child(4) { bottom: 10%; right: 5%; animation-delay: 3s; }
+    .paw:nth-child(5) { top: 50%; left: 50%; animation-delay: 1.5s; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(-5deg); }
+      50% { transform: translateY(-15px) rotate(5deg); }
+    }
+
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 30px 20px 60px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      animation: slideDown 0.6s ease;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .bluey-emoji {
+      font-size: 5rem;
+      display: block;
+      animation: bounce 2s ease-in-out infinite;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    h1 {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.8rem;
+      color: var(--dark-blue);
+      text-shadow: 3px 3px 0px rgba(74,144,217,0.25);
+      letter-spacing: 1px;
+      margin-top: 8px;
+    }
+
+    .subtitle {
+      color: var(--blue);
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-top: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Score bar */
+    .scorebar {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 24px;
+      animation: fadeIn 0.8s ease 0.3s both;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .score-pill {
+      background: var(--white);
+      border-radius: 50px;
+      padding: 8px 22px;
+      font-weight: 800;
+      font-size: 1rem;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 3px solid transparent;
+    }
+    .score-pill.correct { border-color: var(--green); color: var(--green); }
+    .score-pill.wrong { border-color: var(--red); color: var(--red); }
+    .score-pill.total { border-color: var(--blue); color: var(--dark-blue); }
+
+    /* Riddle card */
+    .card {
+      background: var(--white);
+      border-radius: 28px;
+      padding: 36px 32px 28px;
+      box-shadow: var(--shadow), 0 2px 0 var(--blue);
+      border: 3px solid rgba(74,144,217,0.15);
+      margin-bottom: 22px;
+      animation: cardPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, var(--blue), var(--orange), var(--yellow), var(--green));
+      border-radius: 28px 28px 0 0;
+    }
+
+    @keyframes cardPop {
+      from { opacity: 0; transform: scale(0.85); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .riddle-number {
+      font-family: 'Fredoka One', cursive;
+      font-size: 0.85rem;
+      color: var(--blue);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+    }
+
+    .riddle-text {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #1a3a5c;
+      line-height: 1.5;
+      margin-bottom: 28px;
+    }
+
+    /* Answer options */
+    .options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .option-btn {
+      background: var(--bg);
+      border: 3px solid rgba(74,144,217,0.2);
+      border-radius: 16px;
+      padding: 14px 12px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1a3a5c;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      background: var(--blue);
+      color: white;
+      border-color: var(--blue);
+      transform: scale(1.04) translateY(-2px);
+      box-shadow: 0 6px 20px rgba(74,144,217,0.35);
+    }
+
+    .option-btn.correct-answer {
+      background: var(--green) !important;
+      border-color: var(--green) !important;
+      color: white !important;
+      animation: correctPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .option-btn.wrong-answer {
+      background: var(--red) !important;
+      border-color: var(--red) !important;
+      color: white !important;
+      animation: shake 0.4s ease;
+    }
+
+    .option-btn.reveal-correct {
+      background: rgba(93,187,107,0.15) !important;
+      border-color: var(--green) !important;
+      color: var(--green) !important;
+    }
+
+    @keyframes correctPop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+
+    option-btn:disabled { cursor: not-allowed; }
+
+    /* Feedback */
+    .feedback {
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: 800;
+      padding: 14px;
+      border-radius: 14px;
+      margin-top: 16px;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    .feedback.show { display: block; }
+    .feedback.correct { background: rgba(93,187,107,0.15); color: var(--green); }
+    .feedback.wrong { background: rgba(232,93,93,0.12); color: var(--red); }
+
+    .fun-fact {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #555;
+      margin-top: 6px;
+      font-style: italic;
+    }
+
+    /* Next button */
+    .next-btn {
+      display: block;
+      width: 100%;
+      background: linear-gradient(135deg, var(--blue), var(--dark-blue));
+      color: white;
+      border: none;
+      border-radius: 50px;
+      padding: 16px;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.3rem;
+      letter-spacing: 1px;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(74,144,217,0.4);
+      transition: all 0.2s ease;
+      display: none;
+      margin-top: 16px;
+    }
+    .next-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 28px rgba(74,144,217,0.5);
+    }
+    .next-btn.show { display: block; }
+
+    /* Progress bar */
+    .progress-wrap {
+      background: rgba(74,144,217,0.12);
+      border-radius: 50px;
+      height: 10px;
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--blue), var(--orange));
+      border-radius: 50px;
+      transition: width 0.5s ease;
+    }
+
+    /* End screen */
+    .end-screen {
+      text-align: center;
+      background: var(--white);
+      border-radius: 28px;
+      padding: 48px 32px;
+      box-shadow: var(--shadow);
+      border: 3px solid rgba(74,144,217,0.15);
+      display: none;
+      animation: cardPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .end-screen.show { display: block; }
+
+    .end-emoji { font-size: 5rem; display: block; margin-bottom: 16px; }
+
+    .end-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.2rem;
+      color: var(--dark-blue);
+      margin-bottom: 10px;
+    }
+
+    .end-score {
+      font-size: 3.5rem;
+      font-weight: 800;
+      color: var(--blue);
+      margin: 16px 0;
+    }
+
+    .end-msg {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #555;
+      margin-bottom: 28px;
+    }
+
+    .restart-btn {
+      background: linear-gradient(135deg, var(--orange), #e8880a);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      padding: 16px 40px;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.3rem;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(245,166,35,0.45);
+      transition: all 0.2s ease;
+      letter-spacing: 1px;
+    }
+    .restart-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 28px rgba(245,166,35,0.55);
+    }
+
+    .stars {
+      font-size: 2rem;
+      margin: 10px 0;
+      letter-spacing: 4px;
+    }
+
+    /* Hint button */
+    .hint-btn {
+      background: none;
+      border: 2px dashed var(--orange);
+      color: var(--orange);
+      border-radius: 50px;
+      padding: 7px 18px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      margin-top: 14px;
+      transition: all 0.2s ease;
+      display: inline-block;
+    }
+    .hint-btn:hover { background: var(--orange); color: white; }
+    .hint-text {
+      display: none;
+      margin-top: 10px;
+      background: rgba(245,166,35,0.1);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #a06b00;
+      border-left: 4px solid var(--orange);
+    }
+    .hint-text.show { display: block; animation: fadeIn 0.3s ease; }
+  </style>
+</head>
+<body>
+
+  <!-- Floating paws -->
+  <div class="paw">🐾</div>
+  <div class="paw">🐾</div>
+  <div class="paw">🐾</div>
+  <div class="paw">🐾</div>
+  <div class="paw">🐾</div>
+
+  <div class="container">
+    <div class="header">
+      <span class="bluey-emoji">💙Y🐆</span>
+      <h1>Bluey's Riddle Game!</h1>
+      <p class="subtitle">Can you outsmart the Cougar family? 🎉</p>
+    </div>
+
+    <div class="scorebar">
+      <div class="score-pill correct">✅ <span id="correct-count">0</span> Correct</div>
+      <div class="score-pill wrong">❌ <span id="wrong-count">0</span> Wrong</div>
+      <div class="score-pill total">🎯 <span id="q-count">0</span> / <span id="q-total">0</span></div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+    </div>
+
+    <!-- Riddle card -->
+    <div class="card" id="riddle-card">
+      <div class="riddle-number" id="riddle-number">Riddle 1</div>
+      <div class="riddle-text" id="riddle-text"></div>
+      <div class="options" id="options"></div>
+      <button class="hint-btn" id="hint-btn" onclick="showHint()">🦴 Need a hint?</button>
+      <div class="hint-text" id="hint-text"></div>
+      <div class="feedback" id="feedback"></div>
+      <button class="next-btn" id="next-btn" onclick="nextRiddle()">Next Riddle →</button>
+    </div>
+
+    <!-- End screen -->
+    <div class="end-screen" id="end-screen">
+      <span class="end-emoji" id="end-emoji">🏆</span>
+      <div class="end-title" id="end-title">Game Over!</div>
+      <div class="stars" id="stars"></div>
+      <div class="end-score" id="end-score"></div>
+      <div class="end-msg" id="end-msg"></div>
+      <button class="restart-btn" onclick="restartGame()">🔄 Play Again!</button>
+    </div>
+  </div>
+
+  <script>
+    const riddles = [
+      {
+        question: "Bluey and Bingo are playing a game. I have hands but can't clap, a face but no eyes. What am I?",
+        options: ["A mirror", "A clock", "A doll", "A book"],
+        answer: 1,
+        hint: "Bandit always checks me when he's late for work! Tick tock!",
+        funFact: "Bluey loves playing 'What Time Is It, Mr Wolf?' — all about time! ⏰"
+      },
+      {
+        question: "Dad Bandit loves to barbecue. I'm full of holes but still hold water. What am I?",
+        options: ["A colander", "A bucket", "A sponge", "A net"],
+        answer: 2,
+        hint: "Mum Chilli uses me to clean the dishes after Dad's big BBQ mess!",
+        funFact: "Bandit always makes a mess on the BBQ but the kids love it anyway! 🍖"
+      },
+      {
+        question: "Bluey's favourite game needs imagination! The more you take, the more you leave behind. What am I?",
+        options: ["Toys", "Footsteps", "Dreams", "Friends"],
+        answer: 1,
+        hint: "Every time Bluey runs around the backyard, she makes more of these!",
+        funFact: "Bluey and Bingo love running around the backyard making all kinds of tracks! 👣"
+      },
+      {
+        question: "Nana and Grandad visit the Heelers. I speak without a mouth and hear without ears. I have no body but I come alive with wind. What am I?",
+        options: ["A ghost", "An echo", "The wind itself", "A radio"],
+        answer: 1,
+        hint: "When Bluey yells 'HELLO!' in the mountains, something yells it right back!",
+        funFact: "The Heelers once went camping and discovered echoes in the hills! ⛰️"
+      },
+      {
+        question: "Bluey is playing Magic Xylophone! I can be cracked, made, told, and played. What am I?",
+        options: ["A joke", "An egg", "A song", "A game"],
+        answer: 0,
+        hint: "Bandit loves to tell these and make Bluey and Bingo groan and giggle!",
+        funFact: "Bandit's dad jokes are legendary in the Heeler house! 😄"
+      },
+      {
+        question: "Bingo loves to cook with Mum! I have cities but no houses, mountains but no trees, and water but no fish. What am I?",
+        options: ["A painting", "A dream", "A map", "A puzzle"],
+        answer: 2,
+        hint: "The Heeler family uses me when they go on a road trip adventure!",
+        funFact: "The Heelers love going on family road trips across Australia! 🗺️"
+      },
+      {
+        question: "Bluey's teacher Calypso says: The more you share me, the more of me you have. What am I?",
+        options: ["Money", "Food", "Knowledge", "Toys"],
+        answer: 2,
+        hint: "Bluey learns this at school every day from her amazing teacher!",
+        funFact: "Calypso always helps the kids learn in the most magical ways! 📚"
+      },
+      {
+        question: "Uncle Stripe is fixing things around the house. I have teeth but cannot bite. What am I?",
+        options: ["A comb", "A saw", "A zipper", "All of these!"],
+        answer: 3,
+        hint: "Think of THREE things in your house that have teeth but never bite anyone!",
+        funFact: "Uncle Stripe loves fixing things even when he probably shouldn't! 🔧"
+      },
+    ];
+
+    let current = 0;
+    let correctCount = 0;
+    let wrongCount = 0;
+    let answered = false;
+
+    function shuffle(arr) {
+      return [...arr].sort(() => Math.random() - 0.5);
+    }
+
+    const shuffled = shuffle(riddles);
+
+    function loadRiddle() {
+      const r = shuffled[current];
+      answered = false;
+
+      document.getElementById('riddle-number').textContent = `Riddle ${current + 1} of ${shuffled.length}`;
+      document.getElementById('riddle-text').textContent = r.question;
+      document.getElementById('q-count').textContent = current + 1;
+      document.getElementById('q-total').textContent = shuffled.length;
+      document.getElementById('progress-bar').style.width = `${(current / shuffled.length) * 100}%`;
+
+      // Reset UI
+      document.getElementById('feedback').className = 'feedback';
+      document.getElementById('feedback').innerHTML = '';
+      document.getElementById('next-btn').className = 'next-btn';
+      document.getElementById('hint-text').className = 'hint-text';
+      document.getElementById('hint-text').textContent = '';
+
+      // Build options
+      const optionsDiv = document.getElementById('options');
+      optionsDiv.innerHTML = '';
+      r.options.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.textContent = opt;
+        btn.onclick = () => checkAnswer(i, btn);
+        optionsDiv.appendChild(btn);
+      });
+
+      // Re-add hint button
+      document.getElementById('hint-btn').style.display = 'inline-block';
+    }
+
+    function checkAnswer(index, btn) {
+      if (answered) return;
+      answered = true;
+
+      const r = shuffled[current];
+      const allBtns = document.querySelectorAll('.option-btn');
+      allBtns.forEach(b => b.disabled = true);
+
+      const feedback = document.getElementById('feedback');
+
+      if (index === r.answer) {
+        correctCount++;
+        document.getElementById('correct-count').textContent = correctCount;
+        btn.classList.add('correct-answer');
+        feedback.className = 'feedback correct show';
+        feedback.innerHTML = `🎉 Woohoo! That's right!<div class="fun-fact">${r.funFact}</div>`;
+      } else {
+        wrongCount++;
+        document.getElementById('wrong-count').textContent = wrongCount;
+        btn.classList.add('wrong-answer');
+        allBtns[r.answer].classList.add('reveal-correct');
+        feedback.className = 'feedback wrong show';
+        feedback.innerHTML = `😅 Not quite! The answer was: <strong>${r.options[r.answer]}</strong><div class="fun-fact">${r.funFact}</div>`;
+      }
+
+      document.getElementById('hint-btn').style.display = 'none';
+
+      const nextBtn = document.getElementById('next-btn');
+      nextBtn.className = 'next-btn show';
+      if (current === shuffled.length - 1) {
+        nextBtn.textContent = '🏁 See My Score!';
+      } else {
+        nextBtn.textContent = 'Next Riddle →';
+      }
+    }
+
+    function showHint() {
+      const r = shuffled[current];
+      const hintEl = document.getElementById('hint-text');
+      hintEl.textContent = '🦴 Hint: ' + r.hint;
+      hintEl.className = 'hint-text show';
+      document.getElementById('hint-btn').style.display = 'none';
+    }
+
+    function nextRiddle() {
+      current++;
+      if (current >= shuffled.length) {
+        showEndScreen();
+      } else {
+        document.getElementById('riddle-card').style.animation = 'none';
+        document.getElementById('riddle-card').offsetHeight;
+        document.getElementById('riddle-card').style.animation = 'cardPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        loadRiddle();
+      }
+    }
+
+    function showEndScreen() {
+      document.getElementById('riddle-card').style.display = 'none';
+      document.getElementById('progress-bar').style.width = '100%';
+
+      const pct = correctCount / shuffled.length;
+      let emoji, title, msg, stars;
+
+      if (pct === 1) {
+        emoji = '🏆'; title = 'Perfect Score!'; stars = '⭐⭐⭐⭐⭐';
+        msg = "You're as clever as Bluey herself! Bandit would be SO proud! 🐶";
+      } else if (pct >= 0.75) {
+        emoji = '🎉'; title = 'Brilliant Job!'; stars = '⭐⭐⭐⭐';
+        msg = "Bingo says that's amazing! You're a true Heeler friend! 🌟";
+      } else if (pct >= 0.5) {
+        emoji = '😊'; title = 'Good Effort!'; stars = '⭐⭐⭐';
+        msg = "Not bad! Mum Chilli says keep practising and you'll get there! 💪";
+      } else {
+        emoji = '🐾'; title = 'Keep Playing!'; stars = '⭐⭐';
+        msg = "Even Bluey needed practice! Try again and beat your score! 🔄";
+      }
+
+      document.getElementById('end-emoji').textContent = emoji;
+      document.getElementById('end-title').textContent = title;
+      document.getElementById('stars').textContent = stars;
+      document.getElementById('end-score').textContent = `${correctCount} / ${shuffled.length}`;
+      document.getElementById('end-msg').textContent = msg;
+
+      const endScreen = document.getElementById('end-screen');
+      endScreen.className = 'end-screen show';
+    }
+
+    function restartGame() {
+      current = 0;
+      correctCount = 0;
+      wrongCount = 0;
+      document.getElementById('correct-count').textContent = 0;
+      document.getElementById('wrong-count').textContent = 0;
+      shuffled.sort(() => Math.random() - 0.5);
+      document.getElementById('end-screen').className = 'end-screen';
+      document.getElementById('riddle-card').style.display = 'block';
+      loadRiddle();
+    }
+
+    // Init
+    loadRiddle();
+  </script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+/* styles.css */
+
+body {
+  background-color: lightblue;
+  font-family: Georgia, serif;
+  margin: 20px;
+}
+
+h2 {
+  color: darkgreen;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+h3 {
+  color: mediumvioletred;
+  font-family: Arial, sans-serif;
+}
+
+ul {
+  color: #333333;
+  font-family: Georgia, serif;
+  line-height: 1.8;
+}
+
+.nav-links {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.flowers-section {
+  background-color: white;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.greenery-section {
+  background-color: #f0fff0;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.tableau-section{
+  background-color:white;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
